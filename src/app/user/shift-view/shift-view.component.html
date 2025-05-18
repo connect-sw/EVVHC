@@ -1,5 +1,10 @@
-<nav>
+<nav class="top-bar">
   <button routerLink="/" class="back-button">← Back to Home</button>
+
+  <div class="user-info">
+    Logged in as: <strong>{{ loggedInUser }}</strong>
+    <button class="sign-out-button" (click)="signOut()">Sign Out</button>
+  </div>
 </nav>
 
 <h2 class="page-title">Today's Shifts</h2>

@@ -97,4 +97,35 @@
       }
     }
   }
+
+  .user-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+    color: #2c3e50;
+  }
+
+  .sign-out-button {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+
+  .summary-button {
+    background-color: #8e44ad;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    border: none;
+    margin: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
 }

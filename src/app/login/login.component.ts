@@ -12,6 +12,6 @@ export class LoginComponent {
 
   loginAs(user: string): void {
     localStorage.setItem('loggedInUser', user);
-    this.router.navigate(['/user/logger']);
+    this.router.navigate(['/user/shift']);
   }
 }

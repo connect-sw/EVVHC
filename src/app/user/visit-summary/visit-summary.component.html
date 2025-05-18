@@ -1,5 +1,10 @@
-<nav>
+<nav class="top-bar">
   <button routerLink="/" class="back-button">← Back to Home</button>
+
+  <div class="user-info">
+    Logged in as: <strong>{{ loggedInUser }}</strong>
+    <button class="sign-out-button" (click)="signOut()">Sign Out</button>
+  </div>
 </nav>
 
 <section class="summary-container">
@@ -35,4 +40,6 @@
   </table>
 
   <button class="clear-button" (click)="clearLogs()">🗑️ Clear All Logs</button>
+<button class="back-shift-button" routerLink="/user/shift">← Back to Shifts</button>
+<button class="back-shift-button" routerLink="/user/logger">← Back to Logger</button>
 </section>

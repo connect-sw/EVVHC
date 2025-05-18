@@ -21,76 +21,71 @@ export interface Shift {
   providedIn: 'root'
 })
 export class EvvService {
-private shifts: Shift[] = [
-  {
-    id: 'morning',
-    title: 'Morning Shift',
-    start: '08:00',
-    end: '12:00',
-    requirements: ['Vital signs check', 'Medication delivery', 'Meal prep'],
-    region: { lat: 30.0444, lng: 31.2357, radiusKm: 10 },
-    clients: [
-      { id: 'c1', name: 'Mr. John Smith', address: '12 Nile St' },
-      { id: 'c2', name: 'Mrs. Salma Naguib', address: '24 Ramses Ave' }
-    ]
-  },
-  {
-    id: 'evening',
-    title: 'Evening Shift',
-    start: '16:00',
-    end: '20:00',
-    requirements: ['Wound dressing', 'Assist with mobility'],
-    region: { lat: 30.0444, lng: 31.2357, radiusKm: 10 },
-    clients: [
-      { id: 'c3', name: 'Mr. Hossam Hassan' }
-    ]
-  },
-  {
-    id: 'overnight',
-    title: 'Overnight Shift',
-    start: '22:00',
-    end: '06:00',
-    requirements: ['Overnight observation', 'Emergency readiness'],
-    region: { lat: 30.0444, lng: 31.2357, radiusKm: 10 },
-    clients: [
-      { id: 'c4', name: 'Mrs. Noura El-Azab' }
-    ]
-  }
-];
+  private shifts: Shift[] = [
+    {
+      id: 'morning',
+      title: 'Morning Shift',
+      start: '08:00',
+      end: '12:00',
+      requirements: ['Vital signs check', 'Medication delivery', 'Meal prep'],
+      region: { lat: 30.0444, lng: 31.2357, radiusKm: 10 },
+      clients: [
+        { id: 'c1', name: 'Mr. John Smith', address: '12 Nile St' },
+        { id: 'c2', name: 'Mrs. Salma Naguib', address: '24 Ramses Ave' }
+      ]
+    },
+    {
+      id: 'evening',
+      title: 'Evening Shift',
+      start: '16:00',
+      end: '20:00',
+      requirements: ['Wound dressing', 'Assist with mobility'],
+      region: { lat: 30.0444, lng: 31.2357, radiusKm: 10 },
+      clients: [{ id: 'c3', name: 'Mr. Hossam Hassan' }]
+    },
+    {
+      id: 'overnight',
+      title: 'Overnight Shift',
+      start: '22:00',
+      end: '06:00',
+      requirements: ['Overnight observation', 'Emergency readiness'],
+      region: { lat: 30.0444, lng: 31.2357, radiusKm: 10 },
+      clients: [{ id: 'c4', name: 'Mrs. Noura El-Azab' }]
+    }
+  ];
 
-
-  // BehaviorSubject for live caregiver location
+  // Store live caregiver or user location (from SignalR)
   private locationSubject = new BehaviorSubject<{ lat: number; lng: number } | null>(null);
   public location$ = this.locationSubject.asObservable();
 
-  constructor() {
-    this.trackLiveLocation(); // Start tracking on service load
-  }
+  // Logged in user
+  private userSubject = new BehaviorSubject<string | null>(localStorage.getItem('loggedInUser'));
+  public user$ = this.userSubject.asObservable();
 
-  // Return hardcoded shifts
+  constructor() {}
+
   getShifts(): Observable<Shift[]> {
     return of(this.shifts);
   }
 
-  // Simulate Geolocation live tracking
-  private trackLiveLocation(): void {
-    if (navigator.geolocation) {
-      navigator.geolocation.watchPosition(
-        (position) => {
-          const coords = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-          this.locationSubject.next(coords);
-        },
-        (error) => {
-          console.error('Geolocation error:', error);
-        },
-        { enableHighAccuracy: true }
-      );
-    } else {
-      console.warn('Geolocation not supported');
-    }
+  // Call this when SignalR receives live location
+  setLocationManually(coords: { lat: number; lng: number }) {
+    this.locationSubject.next(coords);
+  }
+
+  // Call this on login
+  setUser(user: string) {
+    localStorage.setItem('loggedInUser', user);
+    this.userSubject.next(user);
+  }
+
+  getUser(): string | null {
+    return this.userSubject.getValue();
+  }
+
+  signOut() {
+    localStorage.removeItem('loggedInUser');
+    this.userSubject.next(null);
   }
 
   // Haversine-based distance check

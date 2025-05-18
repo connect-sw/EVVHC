@@ -1,22 +1,49 @@
 import { AfterViewInit, Component, OnInit, OnDestroy } from '@angular/core';
 import { VisitService } from '../services/visit.service';
-import * as L from 'leaflet';
 import { LocationService } from '../services/location.service';
+import { Router } from '@angular/router';
+import * as L from 'leaflet';
+
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'assets/marker-icon-2x.png',
+  iconUrl: 'assets/marker-icon.png',
+  shadowUrl: 'assets/marker-shadow.png'
+});
+
+const greenIcon = new L.Icon({
+  iconUrl: 'assets/leaflet/marker-icon-green.png',
+  shadowUrl: 'assets/leaflet/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+const redIcon = new L.Icon({
+  iconUrl: 'assets/leaflet/marker-icon-red.png',
+  shadowUrl: 'assets/leaflet/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
 
 @Component({
-      standalone: false,
+  standalone: false,
   selector: 'app-visit-logger',
   templateUrl: './visit-logger.component.html',
   styleUrls: ['./visit-logger.component.scss']
 })
 export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
   map: any;
-  marker: any = null;
   currentLat: number | null = null;
   currentLng: number | null = null;
   checkInTime: string = '';
-  isReadyToInitMap = false;
   watchId: number | null = null;
+
+  loggedInUser: string = '';
+  mapMarkers: { [user: string]: L.Marker } = {};
 
   shift: any;
   clients = [
@@ -27,13 +54,45 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
 
   constructor(
     private visitService: VisitService,
-    private locationService: LocationService
+    private locationService: LocationService,
+    private router: Router
   ) {}
 
-
   ngOnInit(): void {
+    const user = localStorage.getItem('loggedInUser');
+    if (!user) {
+      this.router.navigate(['/login']);
+      return;
+    }
+    this.loggedInUser = user;
     this.shift = this.visitService.getSelectedShift();
     this.startWatchingLocation();
+
+    this.locationService.positions$.subscribe((positions) => {
+      if (!this.map) return;
+      Object.entries(positions).forEach(([id, coords]) => {
+        const label = id === this.loggedInUser ? `${id} (You)` : id;
+
+        if (this.mapMarkers[id]) {
+          this.mapMarkers[id].setLatLng([coords.lat, coords.lng]);
+        } else {
+          let customIcon = new L.Icon.Default();
+
+          if (id === 'Client1') {
+            customIcon = greenIcon;
+          } else if (id === 'Client2') {
+            customIcon = redIcon;
+          }
+
+          const marker = L.marker([coords.lat, coords.lng], { icon: customIcon })
+            .addTo(this.map)
+            .bindPopup(label)
+            .openPopup();
+
+          this.mapMarkers[id] = marker;
+        }
+      });
+    });
   }
 
   ngOnDestroy(): void {
@@ -44,20 +103,24 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     const interval = setInterval(() => {
-      if (this.isReadyToInitMap && this.currentLat && this.currentLng) {
+      const coords = localStorage.getItem('lastCoords');
+      if (coords) {
+        const { lat, lng } = JSON.parse(coords);
+        this.currentLat = lat;
+        this.currentLng = lng;
         this.initMap();
         clearInterval(interval);
       }
-    }, 100);
+    }, 200);
   }
 
   startWatchingLocation(): void {
     if (!navigator.geolocation) {
-      alert("Geolocation not supported.");
+      alert('Geolocation not supported.');
       return;
     }
 
-    console.log("🌍 Starting watchPosition...");
+    console.log('🌍 Starting watchPosition...');
 
     this.watchId = navigator.geolocation.watchPosition(
       (position) => {
@@ -68,7 +131,7 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
         console.log(`📍 New Position: ${latitude}, ${longitude} (accuracy: ${accuracy}m)`);
 
         if (accuracy > 1000) {
-          console.warn("⚠️ Location accuracy is too low (IP-based or poor signal).");
+          console.warn('⚠️ Location accuracy is too low (IP-based or poor signal).');
           return;
         }
 
@@ -81,25 +144,13 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
 
         this.currentLat = latitude;
         this.currentLng = longitude;
-        this.locationService.sendLocation('caregiver1', latitude, longitude);
         this.checkInTime = new Date().toLocaleString();
-        this.isReadyToInitMap = true;
 
-        if (this.map) {
-          if (this.marker) {
-            this.marker.setLatLng([latitude, longitude]);
-          } else {
-            this.marker = L.marker([latitude, longitude])
-              .addTo(this.map)
-              .bindPopup('CareGiver')
-              .openPopup();
-          }
-          this.map.setView([latitude, longitude], this.map.getZoom() || 16);
-        }
+        this.locationService.sendLocation(this.loggedInUser, latitude, longitude);
       },
       (error) => {
         console.error('❌ Geolocation error:', error.message);
-        alert("⚠️ Location error: " + error.message);
+        alert('⚠️ Location error: ' + error.message);
       },
       {
         enableHighAccuracy: true,
@@ -108,7 +159,6 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     );
   }
-
 
   initMap(): void {
     const container = document.getElementById('map');
@@ -120,13 +170,9 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
         attribution: '© OpenStreetMap contributors'
       }).addTo(this.map);
 
-      this.marker = L.marker([this.currentLat!, this.currentLng!])
-        .addTo(this.map)
-        .bindPopup('You are here')
-        .openPopup();
-
       setTimeout(() => this.map.invalidateSize(), 200);
 
+      // Add static client markers
       this.clients.forEach(client => {
         L.marker([client.lat, client.lng])
           .addTo(this.map)
@@ -143,5 +189,10 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
   checkOut(client: string) {
     this.visitService.checkOut(client);
     this.checkedInClient = null;
+  }
+
+  signOut() {
+    localStorage.removeItem('loggedInUser');
+    this.router.navigate(['/login']);
   }
 }

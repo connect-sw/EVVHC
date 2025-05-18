@@ -5,14 +5,14 @@ import { VisitLoggerComponent } from './visit-logger/visit-logger.component';
 import { VisitSummaryComponent } from './visit-summary/visit-summary.component';
 
 const routes: Routes = [
-  { path: '', component: ShiftViewComponent },
+  { path: '', redirectTo: 'shift', pathMatch: 'full' },  // Default inside /user
+  { path: 'shift', component: ShiftViewComponent },
   { path: 'logger', component: VisitLoggerComponent },
-  { path: 'summary', component: VisitSummaryComponent },
-
+  { path: 'summary', component: VisitSummaryComponent }
 ];
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule]
 })
-export class UserRoutingModule { }
+export class UserRoutingModule {}

@@ -2,6 +2,13 @@
   <button routerLink="/" class="back-button">← Back to Home</button>
 </nav>
 
+<div class="user-info">
+  Logged in as: <strong>{{ loggedInUser }}</strong>
+  <button class="sign-out-button" (click)="signOut()">Sign Out</button>
+</div>
+
+<button class="summary-button" routerLink="/user/summary">📋 View Visit Summary</button>
+
 <h2 class="page-title">Visit Logger</h2>
 
 <div class="shift-label" *ngIf="shift">
