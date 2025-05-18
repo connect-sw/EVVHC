@@ -1,0 +1,11 @@
+<nav>
+  <button routerLink="/" class="back-button">← Back to Home</button>
+</nav>
+
+<h2 class="page-title">Today's Shifts</h2>
+
+<div *ngFor="let shift of shifts" class="shift-card">
+  <button class="shift-button" (click)="selectShift(shift)">
+    {{ shift.title }} ({{ shift.start }} - {{ shift.end }})
+  </button>
+</div>

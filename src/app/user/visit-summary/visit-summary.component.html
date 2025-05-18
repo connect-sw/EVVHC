@@ -1,0 +1,38 @@
+<nav>
+  <button routerLink="/" class="back-button">← Back to Home</button>
+</nav>
+
+<section class="summary-container">
+  <h2>Visit Summary</h2>
+
+  <div *ngIf="logs.length === 0">
+    <p>No visits have been recorded yet.</p>
+  </div>
+
+  <table *ngIf="logs.length > 0" class="summary-table">
+    <thead>
+      <tr>
+        <th>Shift</th>
+        <th>Client</th>
+        <th>Caregiver</th>
+        <th>Start Time</th>
+        <th>Start Coords</th>
+        <th>End Time</th>
+        <th>End Coords</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let log of logs">
+        <td>{{ log.shiftTitle }}</td>
+        <td>{{ log.clientName }}</td>
+        <td>{{ log.caregiver }}</td>
+        <td>{{ log.startTime }}</td>
+        <td>{{ log.startCoords }}</td>
+        <td>{{ log.endTime || '—' }}</td>
+        <td>{{ log.endCoords || '—' }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <button class="clear-button" (click)="clearLogs()">🗑️ Clear All Logs</button>
+</section>

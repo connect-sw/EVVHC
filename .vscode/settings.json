@@ -1,0 +1,4 @@
+{
+  "appService.defaultWebAppToDeploy": "/subscriptions/4083e52e-9598-410c-857b-667aa11e5c90/resourceGroups/rgPy/providers/Microsoft.Web/sites/EVVHC",
+  "appService.deploySubpath": "evvhc\\dist\\evvhc\\browser"
+}

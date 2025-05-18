@@ -1,59 +1,53 @@
-# EVVHC
+# 🛰️ Mini EVV Logger – Electronic Visit Verification System
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.12.
+A full-stack EVV (Electronic Visit Verification) prototype built with **Angular + SignalR + Leaflet + ASP.NET Core**. This system captures, broadcasts, and logs caregiver GPS coordinates in real time and provides a summary view of past visits.
 
-## Development server
+🔗 **Live Repository:** [https://github.com/connect-sw/EVVHealthCareDemo](https://github.com/connect-sw/EVVHealthCareDemo)
 
-To start a local development server, run:
+---
 
-```bash
-ng serve
-```
+## 📌 Features
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+- 📍 Real-time GPS location tracking using browser geolocation
+- 🔁 SignalR-based communication for live updates
+- 🗺️ Interactive Leaflet map with caregiver and client markers
+- ✅ Check-in / Check-out per client
+- 📂 Local storage logging of visits
+- 📊 Visit summary view with timestamps
+- 📱 Responsive, mobile-friendly UI
 
-## Code scaffolding
+---
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## 🧰 Technologies Used
 
-```bash
-ng generate component component-name
-```
+| Layer           | Stack / Library              |
+|----------------|------------------------------|
+| Frontend       | Angular 17+                  |
+| Real-time Comm | SignalR (via @microsoft/signalr) |
+| Mapping        | Leaflet.js                   |
+| Backend        | ASP.NET Core Web API (.NET 8)|
+| WebSocket Hub  | SignalR Hub                  |
+| Storage        | LocalStorage (temporary logging) |
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+---
 
-```bash
-ng generate --help
-```
+## ⚠️ Geolocation Notes
 
-## Building
+This system **requires access to the browser's Geolocation API** to function properly.
 
-To build the project run:
+If the browser does not support geolocation or the user denies permission:
 
-```bash
-ng build
-```
+- The system will alert: `"Geolocation not supported."` or `"Location error: [error message]"`
+- Map and logging functionality will not be initialized
+- No data will be sent or stored
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+To ensure functionality:
 
-## Running unit tests
+- Use a modern browser (e.g., Chrome, Edge, Firefox)
+- Grant location access when prompted
+- Ensure location/GPS is enabled on your device (especially on mobile)
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+---
 
-```bash
-ng test
-```
+## 📦 Project Structure
 
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.

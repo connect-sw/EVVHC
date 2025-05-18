@@ -1,0 +1,21 @@
+<nav>
+  <button routerLink="/" class="back-button">← Back to Home</button>
+</nav>
+
+<h2 class="page-title">Visit Logger</h2>
+
+<div class="shift-label" *ngIf="shift">
+  <span>Shift:</span> <strong>{{ shift.title }}</strong>
+</div>
+
+<!-- Client cards -->
+<div class="client-list">
+  <div *ngFor="let client of clients" class="client-card">
+    <p><strong>Client:</strong> {{ client.name }}</p>
+    <button class="check-in-btn" (click)="checkIn(client.name)" *ngIf="checkedInClient !== client.name">Check In</button>
+    <button class="check-out-btn" (click)="checkOut(client.name)" *ngIf="checkedInClient === client.name">Check Out</button>
+  </div>
+</div>
+
+<!-- Map -->
+<div id="map" class="map-frame"></div>
