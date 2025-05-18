@@ -17,7 +17,7 @@ export class LocationService {
 
   constructor() {
     this.hubConnection = new signalR.HubConnectionBuilder()
-      .withUrl('evvhcapi.azurewebsites.net/locationHub') // Adjust port for production  evvhcapi.azurewebsites.net  // https://localhost:7059/locationHub
+      .withUrl('https://evvhcapi.azurewebsites.net/locationHub') // Adjust port for production  evvhcapi.azurewebsites.net  // https://localhost:7059/locationHub
       .build();
 
     this.hubConnection
