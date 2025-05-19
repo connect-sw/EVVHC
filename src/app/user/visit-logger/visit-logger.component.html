@@ -4,7 +4,7 @@
 
 <div class="user-info">
   <strong>
-      {{ loggedInUser?.name }} ({{ loggedInUser?.role }})
+      {{ loggedInUser?.name }}
     </strong>
   <button class="sign-out-button" (click)="signOut()">Sign Out</button>
 </div>
@@ -26,5 +26,8 @@
   </div>
 </div>
 
+<div style="text-align: center;">
+  <strong style="color: red;">{{messege}}</strong>
+</div>
 <!-- Map -->
 <div id="map" class="map-frame"></div>

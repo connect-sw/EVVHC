@@ -53,16 +53,13 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
   currentLng: number | null = null;
   checkInTime: string = '';
   watchId: number | null = null;
-
   loggedInUser: User | null = null;
-
   mapMarkers: { [userId: string]: L.Marker } = {};
-
   shift: any;
   clients: any[] = [];
   users: User[] = [];
-
   checkedInClient: string | null = null;
+  messege: string = '';
 
   constructor(
     private visitService: VisitService,
@@ -141,14 +138,17 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.watchId = navigator.geolocation.watchPosition(
       (position) => {
-        
+
         const latitude = position.coords.latitude;
         const longitude = position.coords.longitude;
         const accuracy = position.coords.accuracy;
 
         if (accuracy > 1000) {
-          console.warn('⚠️ Location accuracy is too low.');
+          console.warn('⚠️ Location accuracy is too low.', accuracy );
+          this.messege = '⚠️ Location accuracy is too low ( '+ accuracy + ' ) try use a mobile for more accuracy';
           return;
+        }else{
+          this.messege = '';
         }
 
         const lastCoords = localStorage.getItem('lastCoords');
