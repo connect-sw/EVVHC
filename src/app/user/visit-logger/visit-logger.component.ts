@@ -86,29 +86,30 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     this.shift = this.visitService.getSelectedShift();
-    this.startWatchingLocation();
 
     this.locationService.positions$.subscribe((positions) => {
       if (!this.map) return;
 
       Object.entries(positions).forEach(([id, coords]) => {
+
         let customIcon = new L.Icon.Default();
         customIcon = smallRedIcon;
-       debugger
+
         if (this.mapMarkers[id]) {
-          debugger
+
           this.mapMarkers[id].setLatLng([coords.lat, coords.lng]);
         } else {
-          debugger
+
           const marker = L.marker([coords.lat, coords.lng], { icon: customIcon })
             .addTo(this.map)
             .bindPopup(this.loggedInUser!.id)
             .openPopup();
-          debugger
+
           this.mapMarkers[id] = marker;
         }
       });
     });
+    this.startWatchingLocation();
 
   }
 
@@ -132,6 +133,7 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   startWatchingLocation(): void {
+
     if (!navigator.geolocation) {
       alert('Geolocation not supported.');
       return;
@@ -139,6 +141,7 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.watchId = navigator.geolocation.watchPosition(
       (position) => {
+        
         const latitude = position.coords.latitude;
         const longitude = position.coords.longitude;
         const accuracy = position.coords.accuracy;
@@ -199,21 +202,25 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
       setTimeout(() => this.map.invalidateSize(), 200);
 
       this.locationService.clientsPositions$.subscribe(clientPositions => {
+
         Object.entries(clientPositions).forEach(([clientName, coords]) => {
-          this.clients.push({name: clientName})
+
+          this.clients.push({name: clientName, lat: coords.lat, lng: coords.lng})
           L.marker([coords.lat, coords.lng])
             .addTo(this.map)
             .bindPopup(`Client: ${clientName}`);
         });
       });
 
-      this.users.forEach(user => {
-        if (user.lat !== undefined && user.lng !== undefined) {
-          L.marker([user.lat , user.lng])
-            .addTo(this.map)
-            .bindPopup(`CareGiver: ${user.name}`);
-        }
-      });
+      // this.users.forEach(user => {
+      //
+      //   if (user.lat !== undefined && user.lng !== undefined) {
+      //
+      //     L.marker([user.lat , user.lng])
+      //       .addTo(this.map)
+      //       .bindPopup(`CareGiver: ${user.name}`);
+      //   }
+      // });
     }
   }
 

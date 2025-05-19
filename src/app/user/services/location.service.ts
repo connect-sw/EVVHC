@@ -34,7 +34,7 @@ export class LocationService {
 
     this.hubConnection.on('ReceiveLocation', (id: string, lat: number, lng: number) => {
       console.log('📡 Received:', id, lat, lng);
-
+debugger
       // Update internal map
       this.userPositions[id] = { lat, lng };
 
