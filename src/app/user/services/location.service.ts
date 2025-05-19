@@ -14,7 +14,7 @@ export class LocationService {
   // Observable for components to react to updates
   private positionsSubject = new BehaviorSubject<{ [id: string]: { lat: number; lng: number } }>({});
   public positions$ = this.positionsSubject.asObservable();
-
+            
   constructor() {
     this.hubConnection = new signalR.HubConnectionBuilder()
       .withUrl('https://evvhcapi.azurewebsites.net/locationHub') // Adjust port for production  evvhcapi.azurewebsites.net  // https://localhost:7059/locationHub

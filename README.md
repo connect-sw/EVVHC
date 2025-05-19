@@ -1,3 +1,7 @@
+
+
+as a demo You do not need a database for this to work if your goal is just live visibility of all currently online users. in thlive app the data base will store info which will be supply maps 
+
 # 🛰️ Mini EVV Logger – Electronic Visit Verification System
 
 A full-stack EVV (Electronic Visit Verification) prototype built with **Angular + SignalR + Leaflet + ASP.NET Core**. This system captures, broadcasts, and logs caregiver GPS coordinates in real time and provides a summary view of past visits.

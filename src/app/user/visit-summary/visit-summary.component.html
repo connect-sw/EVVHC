@@ -2,7 +2,9 @@
   <button routerLink="/" class="back-button">← Back to Home</button>
 
   <div class="user-info">
-    Logged in as: <strong>{{ loggedInUser }}</strong>
+    <strong>
+      {{ loggedInUser?.name }} ({{ loggedInUser?.role }})
+    </strong>
     <button class="sign-out-button" (click)="signOut()">Sign Out</button>
   </div>
 </nav>
@@ -30,7 +32,7 @@
       <tr *ngFor="let log of logs">
         <td>{{ log.shiftTitle }}</td>
         <td>{{ log.clientName }}</td>
-        <td>{{ log.caregiver }}</td>
+        <td>{{ log.loggedInUser.name }}</td>
         <td>{{ log.startTime }}</td>
         <td>{{ log.startCoords }}</td>
         <td>{{ log.endTime || '—' }}</td>

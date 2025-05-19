@@ -1,5 +1,7 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
+import { User } from '../user/models/model';
+import { knownUsers } from '../shared/users-list';
 
 @Component({
   selector: 'app-login',
@@ -10,8 +12,13 @@ import { Router } from '@angular/router';
 export class LoginComponent {
   constructor(private router: Router) {}
 
-  loginAs(user: string): void {
-    localStorage.setItem('loggedInUser', user);
-    this.router.navigate(['/user/shift']);
+  loginAs(role: string): void {
+    const usr = knownUsers.find(u => u.role === role);
+    if (usr) {
+      localStorage.setItem('loggedInUser', JSON.stringify(usr));
+      this.router.navigate(['/user/shift']);
+    } else {
+      alert('User not found!');
+    }
   }
 }

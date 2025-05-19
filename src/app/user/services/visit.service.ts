@@ -1,16 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-
-export interface VisitLog {
-  shiftTitle: string;
-  clientName: string;
-  caregiver: string;
-  startTime: string;
-  endTime?: string;
-  startCoords: string;
-  endCoords?: string;
-  locationTrail?: string[];
-}
+import { VisitLog, User } from '../models/model';
 
 @Injectable({ providedIn: 'root' })
 export class VisitService {
@@ -30,16 +20,16 @@ export class VisitService {
 
   // Called when selecting a shift
   selectShift(shift: any) {
-    const caregiver = localStorage.getItem('loggedInUser') || 'Unknown';
+    const userJson = localStorage.getItem('loggedInUser');
+    const loggedInUser: User = userJson ? JSON.parse(userJson) : { id: 'Unknown', name: 'Unknown', role: 'Caregiver' };
 
-    // Use latest coords if available
     const last = localStorage.getItem('lastCoords');
     const parsed = last ? JSON.parse(last) : null;
     const coords = parsed ? `Lat: ${parsed.lat}, Lng: ${parsed.lng}` : 'Unknown';
 
     this.currentShift = {
       ...shift,
-      caregiver,
+      loggedInUser,
       timestamp: new Date().toISOString(),
       startCoords: coords
     };
@@ -50,7 +40,8 @@ export class VisitService {
   }
 
   checkIn(clientName: string) {
-    const caregiver = this.currentShift?.caregiver || localStorage.getItem('loggedInUser') || 'Unknown';
+    const loggedInUser: User = this.currentShift?.loggedInUser
+      || JSON.parse(localStorage.getItem('loggedInUser') || '{}');
 
     const last = localStorage.getItem('lastCoords');
     const parsed = last ? JSON.parse(last) : null;
@@ -58,8 +49,8 @@ export class VisitService {
 
     const log: VisitLog = {
       shiftTitle: this.currentShift?.title || 'N/A',
-      caregiver,
       clientName,
+      loggedInUser,
       startTime: new Date().toISOString(),
       startCoords: coords
     };

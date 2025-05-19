@@ -3,6 +3,8 @@ import { VisitService } from '../services/visit.service';
 import { LocationService } from '../services/location.service';
 import { Router } from '@angular/router';
 import * as L from 'leaflet';
+import { knownUsers } from '../../shared/users-list';
+import { UserRole, User } from '../../user/models/model';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -11,23 +13,33 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'assets/marker-shadow.png'
 });
 
-const greenIcon = new L.Icon({
-  iconUrl: 'assets/leaflet/marker-icon-green.png',
-  shadowUrl: 'assets/leaflet/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
+const smallGreenIcon = new L.Icon({
+  iconUrl: 'assets/marker-icon-green.png',
+  shadowUrl: 'assets/marker-shadow.png',
+  iconSize: [20, 32],
+  iconAnchor: [10, 32],
+  popupAnchor: [1, -30],
+  shadowSize: [30, 30]
 });
 
-const redIcon = new L.Icon({
-  iconUrl: 'assets/leaflet/marker-icon-red.png',
-  shadowUrl: 'assets/leaflet/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
+const smallRedIcon = new L.Icon({
+  iconUrl: 'assets/marker-icon-red.png',
+  shadowUrl: 'assets/marker-shadow.png',
+  iconSize: [20, 32],
+  iconAnchor: [10, 32],
+  popupAnchor: [1, -30],
+  shadowSize: [30, 30]
 });
+
+const fallbackIcon = new L.Icon({
+  iconUrl: 'assets/marker-icon.png',
+  shadowUrl: 'assets/marker-shadow.png',
+  iconSize: [20, 32],
+  iconAnchor: [10, 32],
+  popupAnchor: [1, -30],
+  shadowSize: [30, 30]
+});
+
 
 @Component({
   standalone: false,
@@ -42,8 +54,9 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
   checkInTime: string = '';
   watchId: number | null = null;
 
-  loggedInUser: string = '';
-  mapMarkers: { [user: string]: L.Marker } = {};
+  loggedInUser: User | null = null;
+
+  mapMarkers: { [userId: string]: L.Marker } = {};
 
   shift: any;
   clients = [
@@ -59,31 +72,44 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    const user = localStorage.getItem('loggedInUser');
-    if (!user) {
+    const userJson = localStorage.getItem('loggedInUser');
+    if (!userJson) {
       this.router.navigate(['/login']);
       return;
     }
-    this.loggedInUser = user;
+
+    try {
+      this.loggedInUser = JSON.parse(userJson);
+    } catch {
+      alert('Invalid user format.');
+      this.router.navigate(['/login']);
+      return;
+    }
+
     this.shift = this.visitService.getSelectedShift();
     this.startWatchingLocation();
 
     this.locationService.positions$.subscribe((positions) => {
       if (!this.map) return;
+
       Object.entries(positions).forEach(([id, coords]) => {
-        const label = id === this.loggedInUser ? `${id} (You)` : id;
+        debugger
+        const userInfo: User | undefined = knownUsers.find(u => u.id === id);
+        const role: UserRole = userInfo?.role || 'Caregiver';
+        const label = id === this.loggedInUser!.id
+          ? `${userInfo?.name} (${this.loggedInUser?.role})`
+          : `${userInfo?.name} (${role})`;
+
+        let customIcon = new L.Icon.Default();
+        if (role === 'Client') {
+          customIcon = smallGreenIcon;
+        } else if (role === 'Caregiver') {
+          customIcon = smallRedIcon;
+        }
 
         if (this.mapMarkers[id]) {
           this.mapMarkers[id].setLatLng([coords.lat, coords.lng]);
         } else {
-          let customIcon = new L.Icon.Default();
-
-          if (id === 'Client1') {
-            customIcon = greenIcon;
-          } else if (id === 'Client2') {
-            customIcon = redIcon;
-          }
-
           const marker = L.marker([coords.lat, coords.lng], { icon: customIcon })
             .addTo(this.map)
             .bindPopup(label)
@@ -93,12 +119,6 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       });
     });
-  }
-
-  ngOnDestroy(): void {
-    if (this.watchId !== null) {
-      navigator.geolocation.clearWatch(this.watchId);
-    }
   }
 
   ngAfterViewInit(): void {
@@ -114,13 +134,17 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
     }, 200);
   }
 
+  ngOnDestroy(): void {
+    if (this.watchId !== null) {
+      navigator.geolocation.clearWatch(this.watchId);
+    }
+  }
+
   startWatchingLocation(): void {
     if (!navigator.geolocation) {
       alert('Geolocation not supported.');
       return;
     }
-
-    console.log('🌍 Starting watchPosition...');
 
     this.watchId = navigator.geolocation.watchPosition(
       (position) => {
@@ -128,25 +152,36 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
         const longitude = position.coords.longitude;
         const accuracy = position.coords.accuracy;
 
-        console.log(`📍 New Position: ${latitude}, ${longitude} (accuracy: ${accuracy}m)`);
-
         if (accuracy > 1000) {
-          console.warn('⚠️ Location accuracy is too low (IP-based or poor signal).');
+          console.warn('⚠️ Location accuracy is too low.');
           return;
         }
 
         const lastCoords = localStorage.getItem('lastCoords');
         const last = lastCoords ? JSON.parse(lastCoords) : null;
+        const isDifferent = !last || last.lat !== latitude || last.lng !== longitude;
 
-        if (!last || last.lat !== latitude || last.lng !== longitude) {
+        if (isDifferent) {
           localStorage.setItem('lastCoords', JSON.stringify({ lat: latitude, lng: longitude }));
+
+          const history = JSON.parse(localStorage.getItem('locationHistory') || '[]');
+          history.push({
+            lat: latitude,
+            lng: longitude,
+            timestamp: new Date().toISOString()
+          });
+          localStorage.setItem('locationHistory', JSON.stringify(history));
         }
 
         this.currentLat = latitude;
         this.currentLng = longitude;
         this.checkInTime = new Date().toLocaleString();
 
-        this.locationService.sendLocation(this.loggedInUser, latitude, longitude);
+        if (this.map) {
+          this.map.setView([latitude, longitude], this.map.getZoom());
+        }
+
+        this.locationService.sendLocation(this.loggedInUser!.id, latitude, longitude);
       },
       (error) => {
         console.error('❌ Geolocation error:', error.message);
@@ -172,7 +207,6 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
 
       setTimeout(() => this.map.invalidateSize(), 200);
 
-      // Add static client markers
       this.clients.forEach(client => {
         L.marker([client.lat, client.lng])
           .addTo(this.map)

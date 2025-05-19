@@ -3,7 +3,9 @@
 </nav>
 
 <div class="user-info">
-  Logged in as: <strong>{{ loggedInUser }}</strong>
+  <strong>
+      {{ loggedInUser?.name }} ({{ loggedInUser?.role }})
+    </strong>
   <button class="sign-out-button" (click)="signOut()">Sign Out</button>
 </div>
 

@@ -1,21 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-
-export interface Client {
-  id: string;
-  name: string;
-  address?: string;
-}
-
-export interface Shift {
-  id: string;
-  title: string;
-  start: string;
-  end: string;
-  requirements: string[];
-  region: { lat: number; lng: number; radiusKm: number };
-  clients: Client[];
-}
+import { Shift } from '../models/model';
 
 @Injectable({
   providedIn: 'root'
@@ -54,7 +39,7 @@ export class EvvService {
     }
   ];
 
-  // Store live caregiver or user location (from SignalR)
+  // Store live loggedInUser or user location (from SignalR)
   private locationSubject = new BehaviorSubject<{ lat: number; lng: number } | null>(null);
   public location$ = this.locationSubject.asObservable();
 
@@ -90,16 +75,16 @@ export class EvvService {
 
   // Haversine-based distance check
   isWithinCoverageArea(
-    caregiver: { lat: number; lng: number },
+    loggedInUser: { lat: number; lng: number },
     region: { lat: number; lng: number; radiusKm: number }
   ): boolean {
     const toRad = (x: number) => (x * Math.PI) / 180;
     const R = 6371;
-    const dLat = toRad(region.lat - caregiver.lat);
-    const dLon = toRad(region.lng - caregiver.lng);
+    const dLat = toRad(region.lat - loggedInUser.lat);
+    const dLon = toRad(region.lng - loggedInUser.lng);
     const a =
       Math.sin(dLat / 2) ** 2 +
-      Math.cos(toRad(caregiver.lat)) *
+      Math.cos(toRad(loggedInUser.lat)) *
         Math.cos(toRad(region.lat)) *
         Math.sin(dLon / 2) ** 2;
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));

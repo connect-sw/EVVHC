@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { VisitService, VisitLog } from '../services/visit.service';
 import { Router } from '@angular/router';
+import { VisitService } from '../services/visit.service';
+import { User, VisitLog } from '../models/model';
 
 @Component({
   standalone: false,
@@ -10,26 +11,37 @@ import { Router } from '@angular/router';
 })
 export class VisitSummaryComponent implements OnInit {
   logs: VisitLog[] = [];
-  loggedInUser: string = '';
+  loggedInUser: User | null = null;
 
-  constructor(private visitService: VisitService, private router: Router) {}
+  constructor(
+    private visitService: VisitService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
-    const user = localStorage.getItem('loggedInUser');
-    if (!user) {
+    const userJson = localStorage.getItem('loggedInUser');
+    if (!userJson) {
       this.router.navigate(['/login']);
-    } else {
-      this.loggedInUser = user;
+      return;
     }
 
-    this.visitService.logs$.subscribe(logs => (this.logs = logs));
+    try {
+      this.loggedInUser = JSON.parse(userJson) as User;
+    } catch (error) {
+      alert('❌ Failed to load user from local storage.');
+      this.router.navigate(['/login']);
+    }
+
+    this.visitService.logs$.subscribe(logs => {
+      this.logs = logs;
+    });
   }
 
-  clearLogs() {
+  clearLogs(): void {
     this.visitService.clearLogs();
   }
 
-  signOut() {
+  signOut(): void {
     localStorage.removeItem('loggedInUser');
     this.router.navigate(['/login']);
   }

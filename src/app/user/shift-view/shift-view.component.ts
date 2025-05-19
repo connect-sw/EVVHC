@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { VisitService } from '../services/visit.service';
+import { User } from '../../user/models/model';
 
 @Component({
   standalone: false,
@@ -15,21 +16,30 @@ export class ShiftViewComponent implements OnInit {
     { id: 3, title: 'Overnight Shift', start: '22:00', end: '06:00' }
   ];
 
-  loggedInUser: string = '';
+  loggedInUser: User | null = null;
 
-  constructor(private visitService: VisitService, private router: Router) {}
+  constructor(
+    private visitService: VisitService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
-    const user = localStorage.getItem('loggedInUser');
-    if (!user) {
+    const userJson = localStorage.getItem('loggedInUser');
+    if (!userJson) {
       this.router.navigate(['/login']);
-    } else {
-      this.loggedInUser = user;
+      return;
+    }
+
+    try {
+      this.loggedInUser = JSON.parse(userJson) as User;
+    } catch (e) {
+      alert('⚠️ Failed to load user info.');
+      this.router.navigate(['/login']);
     }
   }
 
-  selectShift(shift: any) {
-    this.visitService.selectShift(shift); // Caregiver pulled inside the service
+  selectShift(shift: any): void {
+    this.visitService.selectShift(shift);
     this.router.navigate(['/user/logger']);
   }
 
