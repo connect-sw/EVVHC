@@ -8,13 +8,20 @@ import { BehaviorSubject } from 'rxjs';
 export class LocationService {
   private hubConnection: signalR.HubConnection;
 
-  // Stores the latest location of all users
+  // Stores the latest location of all users and clients
   private userPositions: { [id: string]: { lat: number; lng: number } } = {};
+  //private clientsPositions: { [id: string]: { lat: number; lng: number } } = {};
 
   // Observable for components to react to updates
   private positionsSubject = new BehaviorSubject<{ [id: string]: { lat: number; lng: number } }>({});
   public positions$ = this.positionsSubject.asObservable();
-            
+
+  private clientsPositionsSubject = new BehaviorSubject<{ [id: string]: { lat: number; lng: number } }>({
+    'Client A': { lat: 30.0444, lng: 31.2357 },
+    'Client B': { lat: 30.0131, lng: 31.2089 }
+  });
+  public clientsPositions$ = this.clientsPositionsSubject.asObservable();
+
   constructor() {
     this.hubConnection = new signalR.HubConnectionBuilder()
       .withUrl('https://evvhcapi.azurewebsites.net/locationHub') // Adjust port for production  evvhcapi.azurewebsites.net  // https://localhost:7059/locationHub

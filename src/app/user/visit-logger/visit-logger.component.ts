@@ -59,10 +59,9 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
   mapMarkers: { [userId: string]: L.Marker } = {};
 
   shift: any;
-  clients = [
-    { name: 'Client A', lat: 30.0444, lng: 31.2357 },
-    { name: 'Client B', lat: 30.0131, lng: 31.2089 }
-  ];
+  clients: any[] = [];
+  users: User[] = [];
+
   checkedInClient: string | null = null;
 
   constructor(
@@ -93,32 +92,24 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
       if (!this.map) return;
 
       Object.entries(positions).forEach(([id, coords]) => {
-        debugger
-        const userInfo: User | undefined = knownUsers.find(u => u.id === id);
-        const role: UserRole = userInfo?.role || 'Caregiver';
-        const label = id === this.loggedInUser!.id
-          ? `${userInfo?.name} (${this.loggedInUser?.role})`
-          : `${userInfo?.name} (${role})`;
-
         let customIcon = new L.Icon.Default();
-        if (role === 'Client') {
-          customIcon = smallGreenIcon;
-        } else if (role === 'Caregiver') {
-          customIcon = smallRedIcon;
-        }
-
+        customIcon = smallRedIcon;
+       debugger
         if (this.mapMarkers[id]) {
+          debugger
           this.mapMarkers[id].setLatLng([coords.lat, coords.lng]);
         } else {
+          debugger
           const marker = L.marker([coords.lat, coords.lng], { icon: customIcon })
             .addTo(this.map)
-            .bindPopup(label)
+            .bindPopup(this.loggedInUser!.id)
             .openPopup();
-
+          debugger
           this.mapMarkers[id] = marker;
         }
       });
     });
+
   }
 
   ngAfterViewInit(): void {
@@ -207,10 +198,21 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
 
       setTimeout(() => this.map.invalidateSize(), 200);
 
-      this.clients.forEach(client => {
-        L.marker([client.lat, client.lng])
-          .addTo(this.map)
-          .bindPopup(`Client: ${client.name}`);
+      this.locationService.clientsPositions$.subscribe(clientPositions => {
+        Object.entries(clientPositions).forEach(([clientName, coords]) => {
+          this.clients.push({name: clientName})
+          L.marker([coords.lat, coords.lng])
+            .addTo(this.map)
+            .bindPopup(`Client: ${clientName}`);
+        });
+      });
+
+      this.users.forEach(user => {
+        if (user.lat !== undefined && user.lng !== undefined) {
+          L.marker([user.lat , user.lng])
+            .addTo(this.map)
+            .bindPopup(`CareGiver: ${user.name}`);
+        }
       });
     }
   }

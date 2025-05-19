@@ -1,12 +1,8 @@
-
-
-as a demo You do not need a database for this to work if your goal is just live visibility of all currently online users. in thlive app the data base will store info which will be supply maps 
-
 # 🛰️ Mini EVV Logger – Electronic Visit Verification System
 
 A full-stack EVV (Electronic Visit Verification) prototype built with **Angular + SignalR + Leaflet + ASP.NET Core**. This system captures, broadcasts, and logs caregiver GPS coordinates in real time and provides a summary view of past visits.
 
-🔗 **Live Repository:** [https://github.com/connect-sw/EVVHealthCareDemo](https://github.com/connect-sw/EVVHealthCareDemo)
+🔗 **Live Repository:**  
 
 ---
 
@@ -32,6 +28,21 @@ A full-stack EVV (Electronic Visit Verification) prototype built with **Angular 
 | Backend        | ASP.NET Core Web API (.NET 8)|
 | WebSocket Hub  | SignalR Hub                  |
 | Storage        | LocalStorage (temporary logging) |
+
+---
+
+## 👥 User Model: Caregivers & Clients
+
+For demo purposes:
+
+- **Caregivers** are dynamically loaded from a static list used for login and simulation.
+  - This allows live testing of multiple users without needing a backend database.
+  - Each caregiver broadcasts their live location using SignalR.
+- **Clients** are hardcoded with fixed GPS coordinates (e.g., `Client A`, `Client B`) and shown on the map for check-in/out reference.
+
+In a live system:
+- Clients and caregivers would be pulled from a secure database.
+- Location data would be validated, stored, and used for audit reporting.
 
 ---
 

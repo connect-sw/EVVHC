@@ -19,10 +19,10 @@
 
 <!-- Client cards -->
 <div class="client-list">
-  <div *ngFor="let client of clients" class="client-card">
-    <p><strong>Client:</strong> {{ client.name }}</p>
-    <button class="check-in-btn" (click)="checkIn(client.name)" *ngIf="checkedInClient !== client.name">Check In</button>
-    <button class="check-out-btn" (click)="checkOut(client.name)" *ngIf="checkedInClient === client.name">Check Out</button>
+  <div *ngFor="let c of clients" class="client-card">
+    <p><strong>Client:</strong> {{ c.name }}</p>
+    <button class="check-in-btn" (click)="checkIn(c.name)" *ngIf="checkedInClient !== c.name">Check In</button>
+    <button class="check-out-btn" (click)="checkOut(c.name)" *ngIf="checkedInClient === c.name">Check Out</button>
   </div>
 </div>
 

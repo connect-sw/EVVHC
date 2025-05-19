@@ -10,15 +10,14 @@ import { knownUsers } from '../shared/users-list';
   styleUrls: ['./login.component.css']
 })
 export class LoginComponent {
+  user: User = {id:'',name:''};
   constructor(private router: Router) {}
 
-  loginAs(role: string): void {
-    const usr = knownUsers.find(u => u.role === role);
-    if (usr) {
-      localStorage.setItem('loggedInUser', JSON.stringify(usr));
+  loginAs(name: string): void {
+      this.user.id = name;
+      this.user.name = name;
+      localStorage.setItem('loggedInUser', JSON.stringify(this.user));
       this.router.navigate(['/user/shift']);
-    } else {
-      alert('User not found!');
-    }
+
   }
 }

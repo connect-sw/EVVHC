@@ -39,7 +39,7 @@ export class VisitService {
     return this.currentShift;
   }
 
-  checkIn(clientName: string) {
+  checkIn(userName: string) {
     const loggedInUser: User = this.currentShift?.loggedInUser
       || JSON.parse(localStorage.getItem('loggedInUser') || '{}');
 
@@ -49,7 +49,7 @@ export class VisitService {
 
     const log: VisitLog = {
       shiftTitle: this.currentShift?.title || 'N/A',
-      clientName,
+      userName,
       loggedInUser,
       startTime: new Date().toISOString(),
       startCoords: coords
@@ -60,9 +60,9 @@ export class VisitService {
     this.saveLogs();
   }
 
-  checkOut(clientName: string) {
+  checkOut(userName: string) {
     const log = this.visitLogs.find(
-      l => l.clientName === clientName && !l.endTime
+      l => l.userName === userName && !l.endTime
     );
 
     if (log) {

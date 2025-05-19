@@ -4,8 +4,10 @@ export type UserRole = 'Caregiver' | 'Client';
 export interface User {
   id: string;
   name: string;
-  role: UserRole;
+  role?: UserRole;
   address?: string;
+  lat?: number;
+  lng?: number;
 }
 
 
@@ -21,7 +23,7 @@ export interface Shift {
 
 export interface VisitLog {
   shiftTitle: string;
-  clientName: string;
+  userName: string;
   loggedInUser: User;
   startTime: string;
   endTime?: string;
