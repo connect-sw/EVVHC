@@ -81,7 +81,6 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
       this.router.navigate(['/login']);
       return;
     }
-
     try {
       this.loggedInUser = JSON.parse(userJson);
     } catch {
