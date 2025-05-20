@@ -100,7 +100,12 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
           this.mapMarkers[id].setLatLng([coords.lat, coords.lng]);
         } else {
           const marker = L.marker([coords.lat, coords.lng], { icon: smallRedIcon }).addTo(this.map);
-          marker.bindTooltip(id, { permanent: true, direction: 'top' }).openTooltip();
+          marker.bindTooltip(id, {
+            permanent: true,
+            direction: 'top',
+            offset: [0, -35] 
+          }).openTooltip();
+
           marker.bindPopup(id);
           this.mapMarkers[id] = marker;
         }
