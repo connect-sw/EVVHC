@@ -1,68 +1,75 @@
 # 🛰️ Mini EVV Logger – Electronic Visit Verification System
 
-A full-stack EVV (Electronic Visit Verification) prototype built with **Angular + SignalR + Leaflet + ASP.NET Core**. This system captures, broadcasts, and logs caregiver GPS coordinates in real time and provides a summary view of past visits.
-
-🔗 **Live Repository:**  
+A full-stack **Electronic Visit Verification (EVV)** prototype built by [Connect Software Solutions](https://connect-sw.com), combining **Angular + SignalR + Leaflet + ASP.NET Core**. The system captures and streams caregiver GPS positions in real time and provides a simple summary of all activities for audit and verification purposes.
 
 ---
 
-## 📌 Features
+## 🔗 Live Demos
+
+- **Frontend (Angular):** [https://evvhc.azurewebsites.net](https://evvhc.azurewebsites.net)  
+- **Backend (ASP.NET Core SignalR Hub):** [https://evvhcapi.azurewebsites.net/locationHub](https://evvhcapi.azurewebsites.net/locationHub)
+
+---
+
+## 📁 Source Code
+
+- **Angular Frontend Repo:** [https://github.com/connect-sw/EVVHC](https://github.com/connect-sw/EVVHC)
+- **ASP.NET Core API Repo:** [https://github.com/connect-sw/EVVHCAPI](https://github.com/connect-sw/EVVHCAPI)
+
+---
+
+## 📌 Key Features
 
 - 📍 Real-time GPS location tracking using browser geolocation
-- 🔁 SignalR-based communication for live updates
-- 🗺️ Interactive Leaflet map with caregiver and client markers
-- ✅ Check-in / Check-out per client
-- 📂 Local storage logging of visits
-- 📊 Visit summary view with timestamps
-- 📱 Responsive, mobile-friendly UI
+- 🔁 SignalR-based WebSocket communication
+- 🗺️ Leaflet-powered interactive map with caregiver and client markers
+- ✅ Client-specific check-in / check-out actions
+- 📂 Visit activity logs stored in localStorage
+- 📊 Visit summary screen with timestamps and movement history
+- 📱 Fully responsive, mobile-friendly UI
 
 ---
 
-## 🧰 Technologies Used
+## 👣 User Experience Flow
 
-| Layer           | Stack / Library              |
-|----------------|------------------------------|
-| Frontend       | Angular 17+                  |
-| Real-time Comm | SignalR (via @microsoft/signalr) |
-| Mapping        | Leaflet.js                   |
-| Backend        | ASP.NET Core Web API (.NET 8)|
-| WebSocket Hub  | SignalR Hub                  |
-| Storage        | LocalStorage (temporary logging) |
+1. **Login Simulation:** Choose a caregiver → starts shift
+2. **Visit Logger:** Location tracked, accuracy validated, map view shown
+3. **Real-Time Updates:** Multiple caregivers tracked simultaneously
+4. **Check-In/Out:** With hardcoded demo clients
+5. **Visit Summary:** All movements and timestamps shown
 
 ---
 
-## 👥 User Model: Caregivers & Clients
+## ⚠️ Geolocation Requirements
 
-For demo purposes:
-
-- **Caregivers** are dynamically loaded from a static list used for login and simulation.
-  - This allows live testing of multiple users without needing a backend database.
-  - Each caregiver broadcasts their live location using SignalR.
-- **Clients** are hardcoded with fixed GPS coordinates (e.g., `Client A`, `Client B`) and shown on the map for check-in/out reference.
-
-In a live system:
-- Clients and caregivers would be pulled from a secure database.
-- Location data would be validated, stored, and used for audit reporting.
+Works best on **mobile browsers** with GPS enabled. Desktop browsers may report low-accuracy positions.
 
 ---
 
-## ⚠️ Geolocation Notes
+## 🧰 Technology Stack
 
-This system **requires access to the browser's Geolocation API** to function properly.
-
-If the browser does not support geolocation or the user denies permission:
-
-- The system will alert: `"Geolocation not supported."` or `"Location error: [error message]"`
-- Map and logging functionality will not be initialized
-- No data will be sent or stored
-
-To ensure functionality:
-
-- Use a modern browser (e.g., Chrome, Edge, Firefox)
-- Grant location access when prompted
-- Ensure location/GPS is enabled on your device (especially on mobile)
+| Layer            | Technology                      |
+|------------------|----------------------------------|
+| Frontend         | Angular 17+                     |
+| Real-Time Comm   | SignalR (via @microsoft/signalr)|
+| Map Visualization| Leaflet.js                      |
+| Backend API      | ASP.NET Core (.NET 8)           |
+| WebSocket Server | SignalR Hub                     |
+| Visit Storage    | localStorage (temporary)        |
 
 ---
 
 ## 📦 Project Structure
 
+```text
+📁 EVVHC (Frontend - Angular)
+├── home/               → Caregiver login
+├── user/               → Shift & visit modules
+│   ├── shift-view/     → Login / start shift
+│   ├── visit-logger/   → Map tracking + actions
+│   └── visit-summary/  → Summary of activities
+├── services/           → Location, Visit, SignalR
+📁 EVVHCAPI (Backend - .NET Core)
+├── LocationHub.cs      → SignalR Hub
+├── BroadcastService.cs → Location push/pull
+└── Program.cs          → API setup

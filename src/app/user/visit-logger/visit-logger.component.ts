@@ -68,6 +68,14 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+     document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        console.log('🔄 App resumed from sleep/tab switch');
+        setTimeout(() => {
+          this.map?.invalidateSize();
+        }, 300);
+      }
+    });
     const userJson = localStorage.getItem('loggedInUser');
     if (!userJson) {
       this.router.navigate(['/login']);
@@ -87,24 +95,26 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
     this.locationService.positions$.subscribe((positions) => {
       if (!this.map) return;
 
-      Object.entries(positions).forEach(([id, coords]) => {
+    this.locationService.positions$.subscribe((positions) => {
+      if (!this.map) return;
 
-        let customIcon = new L.Icon.Default();
+      Object.entries(positions).forEach(([id, coords]) => {
+        const user = knownUsers.find(u => u.id === id);
+        const popupText = user ? `${user.name} (${user.role})` : `User ID: ${id}`;
+        let customIcon = fallbackIcon;
         customIcon = smallRedIcon;
 
         if (this.mapMarkers[id]) {
-
           this.mapMarkers[id].setLatLng([coords.lat, coords.lng]);
         } else {
-
           const marker = L.marker([coords.lat, coords.lng], { icon: customIcon })
             .addTo(this.map)
-            .bindPopup(this.loggedInUser!.id)
-            .openPopup();
-
+            .bindPopup(popupText);
           this.mapMarkers[id] = marker;
         }
       });
+    });
+
     });
     this.startWatchingLocation();
 
