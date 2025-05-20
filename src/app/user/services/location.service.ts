@@ -8,15 +8,14 @@ import { BehaviorSubject } from 'rxjs';
 export class LocationService {
   private hubConnection: signalR.HubConnection;
 
-  // Stores the latest location of all users and clients
-  private userPositions: { [id: string]: { lat: number; lng: number } } = {};
-  //private clientsPositions: { [id: string]: { lat: number; lng: number } } = {};
+  // Stores the latest location and timestamp of all users
+  private userPositions: { [id: string]: { lat: number; lng: number; lastUpdated: number } } = {};
 
   // Observable for components to react to updates
-  private positionsSubject = new BehaviorSubject<{ [id: string]: { lat: number; lng: number } }>({});
+  private positionsSubject = new BehaviorSubject<{ [id: string]: { lat: number; lng: number; lastUpdated: number } }>({});
   public positions$ = this.positionsSubject.asObservable();
 
-  private clientsPositionsSubject = new BehaviorSubject<{ [id: string]: { lat: number; lng: number } }>({
+  private clientsPositionsSubject = new BehaviorSubject<{ [id: string]: { lat: number; lng: number } }>( {
     'Client A': { lat: 30.0444, lng: 31.2357 },
     'Client B': { lat: 30.0131, lng: 31.2089 }
   });
@@ -24,7 +23,7 @@ export class LocationService {
 
   constructor() {
     this.hubConnection = new signalR.HubConnectionBuilder()
-      .withUrl('https://evvhcapi.azurewebsites.net/locationHub') // Adjust port for production  evvhcapi.azurewebsites.net  // https://localhost:7059/locationHub
+      .withUrl('https://evvhcapi.azurewebsites.net/locationHub')
       .build();
 
     this.hubConnection
@@ -34,11 +33,15 @@ export class LocationService {
 
     this.hubConnection.on('ReceiveLocation', (id: string, lat: number, lng: number) => {
       console.log('📡 Received:', id, lat, lng);
-    debugger
-      // Update internal map
-      this.userPositions[id] = { lat, lng };
 
-      // Save latest for current user
+      // Update internal user location map with timestamp
+      this.userPositions[id] = {
+        lat,
+        lng,
+        lastUpdated: Date.now()
+      };
+
+      // Optionally save to localStorage if it's the current user
       const currentUserRaw = localStorage.getItem('loggedInUser');
       if (currentUserRaw) {
         try {
@@ -51,7 +54,7 @@ export class LocationService {
         }
       }
 
-      // Broadcast the new positions to all subscribers
+      // Emit the full updated positions map
       this.positionsSubject.next({ ...this.userPositions });
     });
   }
@@ -63,7 +66,7 @@ export class LocationService {
   }
 
   // Optional: expose current snapshot of user map
-  getCurrentPositions(): { [id: string]: { lat: number; lng: number } } {
+  getCurrentPositions(): { [id: string]: { lat: number; lng: number; lastUpdated: number } } {
     return { ...this.userPositions };
   }
 }

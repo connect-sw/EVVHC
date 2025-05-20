@@ -1,11 +1,8 @@
 
-export type UserRole = 'Caregiver' | 'Client';
 
 export interface User {
   id: string;
   name: string;
-  role?: UserRole;
-  address?: string;
   lat?: number;
   lng?: number;
 }

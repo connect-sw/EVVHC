@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { User } from '../user/models/model';
-import { knownUsers } from '../shared/users-list';
 
 @Component({
   selector: 'app-login',

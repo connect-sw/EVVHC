@@ -3,8 +3,7 @@ import { VisitService } from '../services/visit.service';
 import { LocationService } from '../services/location.service';
 import { Router } from '@angular/router';
 import * as L from 'leaflet';
-import { knownUsers } from '../../shared/users-list';
-import { UserRole, User } from '../../user/models/model';
+import { User } from '../../user/models/model';
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -31,15 +30,6 @@ const smallRedIcon = new L.Icon({
   shadowSize: [30, 30]
 });
 
-const fallbackIcon = new L.Icon({
-  iconUrl: 'assets/marker-icon.png',
-  shadowUrl: 'assets/marker-shadow.png',
-  iconSize: [20, 32],
-  iconAnchor: [10, 32],
-  popupAnchor: [1, -30],
-  shadowSize: [30, 30]
-});
-
 @Component({
   standalone: false,
   selector: 'app-visit-logger',
@@ -53,12 +43,12 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
   checkInTime: string = '';
   watchId: number | null = null;
   loggedInUser: User | null = null;
+  checkedInClient: string | null = null;
   mapMarkers: { [userId: string]: L.Marker } = {};
   shift: any;
   clients: any[] = [];
-  users: User[] = [];
-  checkedInClient: string | null = null;
   messege: string = '';
+  loggedUsers: User[] = [];
 
   constructor(
     private visitService: VisitService,
@@ -69,10 +59,7 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
-        console.log('🔄 App resumed from sleep/tab switch');
-        setTimeout(() => {
-          this.map?.invalidateSize();
-        }, 300);
+        setTimeout(() => this.map?.invalidateSize(), 300);
       }
     });
 
@@ -81,6 +68,7 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
       this.router.navigate(['/login']);
       return;
     }
+
     try {
       this.loggedInUser = JSON.parse(userJson);
     } catch {
@@ -89,47 +77,55 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
+    // Add current user to loggedUsers if not already present
+    if (!this.loggedUsers.some(u => u.id === this.loggedInUser!.id)) {
+      this.loggedUsers.push(this.loggedInUser!);
+    }
+
     this.shift = this.visitService.getSelectedShift();
 
     this.locationService.positions$.subscribe((positions) => {
-    if (!this.map) return;
+      if (!this.map) return;
 
-  // 🧼 Remove markers for users no longer present
-  Object.keys(this.mapMarkers).forEach(existingId => {
-    if (!positions[existingId]) {
-      this.map.removeLayer(this.mapMarkers[existingId]);
-      delete this.mapMarkers[existingId];
-    }
-  });
+      Object.keys(this.mapMarkers).forEach(existingId => {
+        if (!positions[existingId]) {
+          this.map.removeLayer(this.mapMarkers[existingId]);
+          delete this.mapMarkers[existingId];
+        }
+      });
 
-  // 🆕 Add or update current online positions
-  Object.entries(positions).forEach(([id, coords]) => {
-    const icon = id === this.loggedInUser?.id ? smallGreenIcon : smallRedIcon;
-    const user = knownUsers.find(u => u.id === id);
-    const label = user ? `${user.name} (${user.role})` : id;
+      Object.entries(positions).forEach(([id, data]) => {
+        const icon = id === this.loggedInUser?.id ? smallGreenIcon : smallRedIcon;
+        let user = this.loggedUsers.find(u => u.id === id);
 
-    if (!this.mapMarkers[id]) {
-      const marker = L.marker([coords.lat, coords.lng], { icon }).addTo(this.map);
-      marker.bindTooltip(label, {
-        permanent: true,
-        direction: 'top',
-        offset: [0, -35]
-      }).openTooltip();
-      this.mapMarkers[id] = marker;
-    }
+        if (!user) {
+          user = { id, name: id }; // Fallback for unknown users
+          this.loggedUsers.push(user);
+        }
 
-    // ✅ Always update position
-    this.mapMarkers[id].setLatLng([coords.lat, coords.lng]);
-  });
-});
+        const timestamp = new Date(data.lastUpdated).toLocaleTimeString();
+        const label = `${user.name} • ${timestamp}`;
 
+        if (!this.mapMarkers[id]) {
+          const marker = L.marker([data.lat, data.lng], { icon }).addTo(this.map);
+          marker.bindTooltip(label, {
+            permanent: true,
+            direction: 'top',
+            offset: [0, -35]
+          }).openTooltip();
+          this.mapMarkers[id] = marker;
+        }
+
+        this.mapMarkers[id].setLatLng([data.lat, data.lng]);
+      });
+    });
 
     this.startWatchingLocation();
   }
 
   ngAfterViewInit(): void {
     const interval = setInterval(() => {
-      const coords = localStorage.getItem('lastCoords');
+      const coords = localStorage.getItem(`lastCoords_${this.loggedInUser?.id}`);
       if (coords) {
         const { lat, lng } = JSON.parse(coords);
         this.currentLat = lat;
@@ -141,61 +137,42 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.watchId !== null) {
-      navigator.geolocation.clearWatch(this.watchId);
-    }
+    if (this.watchId !== null) navigator.geolocation.clearWatch(this.watchId);
   }
 
   startWatchingLocation(): void {
-    if (!navigator.geolocation) {
-      alert('Geolocation not supported.');
-      return;
-    }
+    if (!navigator.geolocation) return alert('Geolocation not supported.');
 
     this.watchId = navigator.geolocation.watchPosition(
       (position) => {
-        debugger
-        const latitude = position.coords.latitude;
-        const longitude = position.coords.longitude;
-        const accuracy = position.coords.accuracy;
-
+        const { latitude, longitude, accuracy } = position.coords;
         if (accuracy > 1000) {
-          console.warn('⚠️ Location accuracy is too low.', accuracy);
-          this.messege = `⚠️ Location accuracy is too low (${accuracy}) – try a mobile for more accuracy`;
+          this.messege = `⚠️ Accuracy too low (${accuracy})`;
           return;
-        } else {
-          this.messege = '';
         }
 
-        const lastCoordsKey = `lastCoords_${this.loggedInUser!.id}`;
-        const lastCoords = localStorage.getItem(lastCoordsKey);
+        const lastKey = `lastCoords_${this.loggedInUser!.id}`;
+        const lastCoords = localStorage.getItem(lastKey);
         const last = lastCoords ? JSON.parse(lastCoords) : null;
         const isDifferent = !last || last.lat !== latitude || last.lng !== longitude;
 
         if (isDifferent) {
-          localStorage.setItem(lastCoordsKey, JSON.stringify({ lat: latitude, lng: longitude }));
-
+          localStorage.setItem(lastKey, JSON.stringify({ lat: latitude, lng: longitude }));
           const historyKey = `locationHistory_${this.loggedInUser!.id}`;
           const history = JSON.parse(localStorage.getItem(historyKey) || '[]');
           history.push({ lat: latitude, lng: longitude, timestamp: new Date().toISOString() });
           localStorage.setItem(historyKey, JSON.stringify(history));
         }
 
-        debugger
         this.currentLat = latitude;
         this.currentLng = longitude;
         this.checkInTime = new Date().toLocaleString();
 
-        if (this.map) {
-          debugger
-          this.map.setView([latitude, longitude], this.map.getZoom());
-        }
+        if (this.map) this.map.setView([latitude, longitude], this.map.getZoom());
 
         this.locationService.sendLocation(this.loggedInUser!.id, latitude, longitude);
-        debugger
       },
       (error) => {
-        console.error('❌ Geolocation error:', error.message);
         alert('⚠️ Location error: ' + error.message);
       },
       {
