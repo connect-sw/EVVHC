@@ -40,7 +40,6 @@ const fallbackIcon = new L.Icon({
   shadowSize: [30, 30]
 });
 
-
 @Component({
   standalone: false,
   selector: 'app-visit-logger',
@@ -68,14 +67,15 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-     document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
         console.log('🔄 App resumed from sleep/tab switch');
         setTimeout(() => {
           this.map?.invalidateSize();
         }, 300);
       }
     });
+
     const userJson = localStorage.getItem('loggedInUser');
     if (!userJson) {
       this.router.navigate(['/login']);
@@ -95,33 +95,35 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
     this.locationService.positions$.subscribe((positions) => {
       if (!this.map) return;
 
-    this.locationService.positions$.subscribe((positions) => {
-      if (!this.map) return;
-
       Object.entries(positions).forEach(([id, coords]) => {
         const user = knownUsers.find(u => u.id === id);
-        const popupText = user ? `${user.name} (${user.role})` : `User ID: ${id}`;
+        const isCaregiver = user?.role === 'Caregiver';
+        const tooltipText = user ? `${user.name} (${user.role})` : `User ID: ${id}`;
         let customIcon = fallbackIcon;
-        customIcon = smallRedIcon;
+
+        if (isCaregiver) {
+          customIcon = smallGreenIcon;
+        } else {
+          customIcon = smallRedIcon;
+        }
 
         if (this.mapMarkers[id]) {
           this.mapMarkers[id].setLatLng([coords.lat, coords.lng]);
-          const user = knownUsers.find(u => u.id === id);
-          const popupText = user ? `${user.name} (${user.role})` : `User ID: ${id}`;
-          this.mapMarkers[id].setPopupContent(popupText);
-          this.mapMarkers[id].openPopup();
         } else {
-          const marker = L.marker([coords.lat, coords.lng], { icon: customIcon })
-            .addTo(this.map)
-            .bindPopup(popupText);
+          const marker = L.marker([coords.lat, coords.lng], { icon: customIcon }).addTo(this.map);
+
+          if (isCaregiver) {
+            marker.bindTooltip(tooltipText, { permanent: true, direction: 'top' }).openTooltip();
+          } else {
+            marker.bindPopup(`Client: ${tooltipText}`);
+          }
+
           this.mapMarkers[id] = marker;
         }
       });
     });
 
-    });
     this.startWatchingLocation();
-
   }
 
   ngAfterViewInit(): void {
@@ -144,7 +146,6 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   startWatchingLocation(): void {
-
     if (!navigator.geolocation) {
       alert('Geolocation not supported.');
       return;
@@ -152,16 +153,15 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.watchId = navigator.geolocation.watchPosition(
       (position) => {
-
         const latitude = position.coords.latitude;
         const longitude = position.coords.longitude;
         const accuracy = position.coords.accuracy;
 
         if (accuracy > 1000) {
-          console.warn('⚠️ Location accuracy is too low.', accuracy );
-          this.messege = '⚠️ Location accuracy is too low ( '+ accuracy + ' ) try use a mobile for more accuracy';
+          console.warn('⚠️ Location accuracy is too low.', accuracy);
+          this.messege = `⚠️ Location accuracy is too low (${accuracy}) – try a mobile for more accuracy`;
           return;
-        }else{
+        } else {
           this.messege = '';
         }
 
@@ -171,13 +171,8 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
 
         if (isDifferent) {
           localStorage.setItem('lastCoords', JSON.stringify({ lat: latitude, lng: longitude }));
-
           const history = JSON.parse(localStorage.getItem('locationHistory') || '[]');
-          history.push({
-            lat: latitude,
-            lng: longitude,
-            timestamp: new Date().toISOString()
-          });
+          history.push({ lat: latitude, lng: longitude, timestamp: new Date().toISOString() });
           localStorage.setItem('locationHistory', JSON.stringify(history));
         }
 
@@ -216,25 +211,13 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
       setTimeout(() => this.map.invalidateSize(), 200);
 
       this.locationService.clientsPositions$.subscribe(clientPositions => {
-
         Object.entries(clientPositions).forEach(([clientName, coords]) => {
-
-          this.clients.push({name: clientName, lat: coords.lat, lng: coords.lng})
+          this.clients.push({ name: clientName, lat: coords.lat, lng: coords.lng });
           L.marker([coords.lat, coords.lng])
             .addTo(this.map)
             .bindPopup(`Client: ${clientName}`);
         });
       });
-
-      // this.users.forEach(user => {
-      //
-      //   if (user.lat !== undefined && user.lng !== undefined) {
-      //
-      //     L.marker([user.lat , user.lng])
-      //       .addTo(this.map)
-      //       .bindPopup(`CareGiver: ${user.name}`);
-      //   }
-      // });
     }
   }
 
