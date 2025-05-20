@@ -96,21 +96,25 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
       if (!this.map) return;
 
       Object.entries(positions).forEach(([id, coords]) => {
-        if (this.mapMarkers[id]) {
-          this.mapMarkers[id].setLatLng([coords.lat, coords.lng]);
-        } else {
-          const marker = L.marker([coords.lat, coords.lng], { icon: smallRedIcon }).addTo(this.map);
-          marker.bindTooltip(id, {
+        const icon = id === this.loggedInUser?.id ? smallGreenIcon : smallRedIcon;
+        const user = knownUsers.find(u => u.id === id);
+        const label = user ? `${user.name} (${user.role})` : id;
+
+        // 🛠️ Create new marker if needed
+        if (!this.mapMarkers[id]) {
+          const marker = L.marker([coords.lat, coords.lng], { icon }).addTo(this.map);
+          marker.bindTooltip(label, {
             permanent: true,
             direction: 'top',
-            offset: [0, -35] 
+            offset: [0, -35]
           }).openTooltip();
-
-          marker.bindPopup(id);
           this.mapMarkers[id] = marker;
         }
+        // ✅ Always update location even if marker exists
+        this.mapMarkers[id].setLatLng([coords.lat, coords.lng]);
       });
     });
+
     this.startWatchingLocation();
   }
 
