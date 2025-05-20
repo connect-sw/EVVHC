@@ -106,6 +106,10 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
 
         if (this.mapMarkers[id]) {
           this.mapMarkers[id].setLatLng([coords.lat, coords.lng]);
+          const user = knownUsers.find(u => u.id === id);
+          const popupText = user ? `${user.name} (${user.role})` : `User ID: ${id}`;
+          this.mapMarkers[id].setPopupContent(popupText);
+          this.mapMarkers[id].openPopup();
         } else {
           const marker = L.marker([coords.lat, coords.lng], { icon: customIcon })
             .addTo(this.map)
