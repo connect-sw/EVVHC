@@ -34,14 +34,21 @@ export class LocationService {
 
     this.hubConnection.on('ReceiveLocation', (id: string, lat: number, lng: number) => {
       console.log('📡 Received:', id, lat, lng);
-debugger
+    debugger
       // Update internal map
       this.userPositions[id] = { lat, lng };
 
-      // Save latest for current user (optional)
-      const currentUser = localStorage.getItem('loggedInUser');
-      if (currentUser === id) {
-        localStorage.setItem('lastCoords', JSON.stringify({ lat, lng }));
+      // Save latest for current user
+      const currentUserRaw = localStorage.getItem('loggedInUser');
+      if (currentUserRaw) {
+        try {
+          const currentUser = JSON.parse(currentUserRaw);
+          if (currentUser.id === id) {
+            localStorage.setItem(`lastCoords_${id}`, JSON.stringify({ lat, lng }));
+          }
+        } catch (e) {
+          console.warn('Invalid loggedInUser format in localStorage');
+        }
       }
 
       // Broadcast the new positions to all subscribers

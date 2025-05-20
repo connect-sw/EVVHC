@@ -92,27 +92,37 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
     this.shift = this.visitService.getSelectedShift();
 
     this.locationService.positions$.subscribe((positions) => {
-      if (!this.map) return;
+    if (!this.map) return;
 
-      Object.entries(positions).forEach(([id, coords]) => {
-        const icon = id === this.loggedInUser?.id ? smallGreenIcon : smallRedIcon;
-        const user = knownUsers.find(u => u.id === id);
-        const label = user ? `${user.name} (${user.role})` : id;
+  // 🧼 Remove markers for users no longer present
+  Object.keys(this.mapMarkers).forEach(existingId => {
+    if (!positions[existingId]) {
+      this.map.removeLayer(this.mapMarkers[existingId]);
+      delete this.mapMarkers[existingId];
+    }
+  });
 
-        // 🛠️ Create new marker if needed
-        if (!this.mapMarkers[id]) {
-          const marker = L.marker([coords.lat, coords.lng], { icon }).addTo(this.map);
-          marker.bindTooltip(label, {
-            permanent: true,
-            direction: 'top',
-            offset: [0, -35]
-          }).openTooltip();
-          this.mapMarkers[id] = marker;
-        }
-        // ✅ Always update location even if marker exists
-        this.mapMarkers[id].setLatLng([coords.lat, coords.lng]);
-      });
-    });
+  // 🆕 Add or update current online positions
+  Object.entries(positions).forEach(([id, coords]) => {
+    const icon = id === this.loggedInUser?.id ? smallGreenIcon : smallRedIcon;
+    const user = knownUsers.find(u => u.id === id);
+    const label = user ? `${user.name} (${user.role})` : id;
+
+    if (!this.mapMarkers[id]) {
+      const marker = L.marker([coords.lat, coords.lng], { icon }).addTo(this.map);
+      marker.bindTooltip(label, {
+        permanent: true,
+        direction: 'top',
+        offset: [0, -35]
+      }).openTooltip();
+      this.mapMarkers[id] = marker;
+    }
+
+    // ✅ Always update position
+    this.mapMarkers[id].setLatLng([coords.lat, coords.lng]);
+  });
+});
+
 
     this.startWatchingLocation();
   }
@@ -127,7 +137,7 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
         this.initMap();
         clearInterval(interval);
       }
-    }, 200);
+    }, 100);
   }
 
   ngOnDestroy(): void {
@@ -144,6 +154,7 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.watchId = navigator.geolocation.watchPosition(
       (position) => {
+        debugger
         const latitude = position.coords.latitude;
         const longitude = position.coords.longitude;
         const accuracy = position.coords.accuracy;
@@ -156,26 +167,32 @@ export class VisitLoggerComponent implements OnInit, AfterViewInit, OnDestroy {
           this.messege = '';
         }
 
-        const lastCoords = localStorage.getItem('lastCoords');
+        const lastCoordsKey = `lastCoords_${this.loggedInUser!.id}`;
+        const lastCoords = localStorage.getItem(lastCoordsKey);
         const last = lastCoords ? JSON.parse(lastCoords) : null;
         const isDifferent = !last || last.lat !== latitude || last.lng !== longitude;
 
         if (isDifferent) {
-          localStorage.setItem('lastCoords', JSON.stringify({ lat: latitude, lng: longitude }));
-          const history = JSON.parse(localStorage.getItem('locationHistory') || '[]');
+          localStorage.setItem(lastCoordsKey, JSON.stringify({ lat: latitude, lng: longitude }));
+
+          const historyKey = `locationHistory_${this.loggedInUser!.id}`;
+          const history = JSON.parse(localStorage.getItem(historyKey) || '[]');
           history.push({ lat: latitude, lng: longitude, timestamp: new Date().toISOString() });
-          localStorage.setItem('locationHistory', JSON.stringify(history));
+          localStorage.setItem(historyKey, JSON.stringify(history));
         }
 
+        debugger
         this.currentLat = latitude;
         this.currentLng = longitude;
         this.checkInTime = new Date().toLocaleString();
 
         if (this.map) {
+          debugger
           this.map.setView([latitude, longitude], this.map.getZoom());
         }
 
         this.locationService.sendLocation(this.loggedInUser!.id, latitude, longitude);
+        debugger
       },
       (error) => {
         console.error('❌ Geolocation error:', error.message);
